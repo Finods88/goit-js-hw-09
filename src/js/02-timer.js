@@ -1,20 +1,15 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
+import Notiflix from 'notiflix';
 
-const startTimerBtn = document.querySelector('button[data-start]');
-startTimerBtn.disabled = true;
-console.log(startTimerBtn);
+const datetimePicker = document.querySelector('#datetime-picker');
+const startButton = document.querySelector('[data-start]');
+startButton.setAttribute('disabled', true);
 
-const timePicker = document.querySelector('#datetime-picker');
-console.log(timePicker);
-const timerValue = {
-  days: document.querySelector('[data-days]'),
-  hours: document.querySelector('[data-hours]'),
-  minutes: document.querySelector('[data-minutes]'),
-  seconds: document.querySelector('[data-seconds]'),
-};
-
-let timerId = null;
+const elDay = document.querySelector('[data-days]');
+const elHours = document.querySelector('[data-hours]');
+const elMinutes = document.querySelector('[data-minutes]');
+const elSeconds = document.querySelector('[data-seconds]');
 
 const options = {
   enableTime: true,
@@ -23,69 +18,58 @@ const options = {
   minuteIncrement: 1,
   onClose(selectedDates) {
     console.log(selectedDates[0]);
-    console.log(new Date());
-
-    if (selectedDates[0] < new Date()) {
-      startTimerBtn.disabled = true;
-      window.alert('Please choose a date in the future');
+    if (selectedDates[0] <= new Date()) {
+      Notiflix.Notify.failure('Please choose a date in the future');
+      //   window.alert('Please choose a date in the future');
     } else {
-      startTimerBtn.disabled = false;
-      startTimerBtn.addEventListener('click', () => {
-        changeTimerValue(selectedDates[0]);
-      });
+      startButton.removeAttribute('disabled');
     }
   },
 };
 
-flatpickr(timePicker, options);
+flatpickr('#datetime-picker', options);
 
-function changeTimerValue(selectedTime) {
-  const timer = {
-    start() {
-      startTimerBtn.disabled = true;
-      timePicker.disabled = true;
-
-      const startTime = selectedTime;
-      timerId = setInterval(() => {
-        const currentTime = Date.now();
-
-        const deltaTime = currentTime - startTime;
-        const { days, hours, minutes, seconds } = convertMs(deltaTime);
-        console.log(`days = ${days}`);
-
-        timerValue.days.textContent = days;
-        timerValue.hours.textContent = hours;
-        timerValue.minutes.textContent = minutes;
-        timerValue.seconds.textContent = seconds;
-        console.log(deltaTime);
-
-        if (deltaTime >= 0) {
-          clearInterval(timerId);
-          console.log('I worked');
-        }
-      }, 1000);
-    },
-  };
-  timer.start();
-}
-
-function pad(value) {
-  return String(value).padStart(2, '0');
+function updateTimer() {
+  const targetDate = new Date(datetimePicker.value);
+  const currentTime = new Date();
+  const differenceTime = targetDate - currentTime;
+  if (differenceTime < 0) {
+    return;
+  }
+  const { days, hours, minutes, seconds } = convertMs(differenceTime);
+  elDay.textContent = addLeadingZero(days);
+  elHours.textContent = addLeadingZero(hours);
+  elMinutes.textContent = addLeadingZero(minutes);
+  elSeconds.textContent = addLeadingZero(seconds);
 }
 
 function convertMs(ms) {
+  // Number of milliseconds per unit of time
   const second = 1000;
   const minute = second * 60;
   const hour = minute * 60;
   const day = hour * 24;
 
-  const days = pad(Math.floor(ms / day) * -1);
-
-  const hours = pad(Math.floor((ms % day) / hour) * -1);
-
-  const minutes = pad(Math.floor(((ms % day) % hour) / minute) * -1);
-
-  const seconds = pad(Math.floor((((ms % day) % hour) % minute) / second) * -1);
+  // Remaining days
+  const days = Math.floor(ms / day);
+  // Remaining hours
+  const hours = Math.floor((ms % day) / hour);
+  // Remaining minutes
+  const minutes = Math.floor(((ms % day) % hour) / minute);
+  // Remaining seconds
+  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
 
   return { days, hours, minutes, seconds };
 }
+
+function addLeadingZero(value) {
+  value = parseInt(value);
+
+  return value.toString().padStart(2, '0');
+}
+
+startButton.addEventListener('click', () => {
+  setInterval(() => {
+    updateTimer();
+  }, 1000);
+});

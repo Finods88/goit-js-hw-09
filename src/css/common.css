@@ -16,3 +16,17 @@ img {
   display: block;
   max-width: 100%;
 }
+
+
+
+.timer {
+
+  gap: 5px;
+}
+
+.value {
+  font-size: 20px;
+}
+.label {
+  text-transform: uppercase;
+}
